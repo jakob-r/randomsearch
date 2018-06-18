@@ -1,0 +1,14 @@
+url: https://jakob-r.github.io/randomsearch
+
+template:
+  params:
+    bootswatch: cosmo
+
+navbar:
+  left:
+  - text: Quickstart
+    href: articles/randomsearch.html
+    icon: fa-bolt
+  - text: Reference
+    icon: fa-book
+    href: reference/index.html
