@@ -1,4 +1,4 @@
-Package: randomseach
+Package: randomsearch
 Title: Random Search for Smoof Functions
 Description: Simple Random Sarch function for the smoof and ParamHelpers ecosystem. Implemented with parallelization in mind.
 Authors@R: c(
@@ -18,7 +18,8 @@ Imports:
 Suggests:
     rmarkdown,
     testthat,
-    covr
+    covr,
+    knitr
 LazyData: yes
 Encoding: UTF-8
 ByteCompile: yes

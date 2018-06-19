@@ -33,7 +33,6 @@
 #'   Location to store parallel communication files.
 #' @param par.jobs [\code{integer(1)}]\cr
 #'   How many parallel jobs do jo want to run to evaluate the random search?
-#' @template arg_showinfo
 #' @return [\code{\link[ParamHelpers]{OptPath}}
 #' @export
 #' @examples
@@ -42,17 +41,18 @@
 #'  fn = function(x) x[1]^2 + sin(x[2]),
 #'  par.set = makeNumericParamSet(id = "x", lower = -1, upper = 1, len = 2)
 #' )
-#'
-#' # create initial design
-#' des = generateDesign(n = 5L, getParamSet(obj.fun), fun = lhs::maximinLHS)
 #' 
 #' # start random search
-#' res = randomsearch(obj.fun, design = des, max.evals = 10)
-randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, show.info = getOption("randomsearch.show.info", TRUE), design.y.cols = NULL, par.dir = "~/.randomsearch/", par.jobs = NULL) {
+#' res = randomsearch(obj.fun, max.evals = 10)
+randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, design.y.cols = NULL, par.dir = "~/.randomsearch/", par.jobs = NULL) {
 
-  assertDataFrame(design)
-  design.n = nrow(design) %??% 1
+  assertDataFrame(design, null.ok = TRUE)
+  design.n = nrow(design) %??% 0
   assertClass(fun, "smoof_function")
+
+  if (length(unique(shouldBeMinimized(fun))) > 1) {
+    stop("Objective functions with mixed minimization/maximization for each objective are not allowed.")
+  }
 
   max.evals = asInt(max.evals, lower = design.n)
   max.evals = max.evals - design.n
@@ -61,7 +61,8 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
   x.ids = getParamIds(par.set, repeated = TRUE, with.nr = TRUE)
 
   if (is.null(design.y.cols)) {
-    if (getNumberOfObjectives(fun) == 1){
+    d = getNumberOfObjectives(fun)
+    if (d == 1){
       design.y.cols = "y"
     } else {
       design.y.cols = paste("y", seq_len(d), sep = "_")
@@ -71,13 +72,14 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
 
   if (is.null(par.jobs)) {
     par.jobs = parallelGetOptions()$settings$cpus
+  } else {
+    assertCount(par.jobs)
   }
-  assertCount(par.jobs, low)
-
+  
   # what mode should we use
   if (!is.null(max.evals) && is.null(max.execbudget) && is.null(target.fun.value)) {
     mode = "fast.parallel"
-  } else if (!is.null(max.execbudget) || !is.null(target.fun.value) && !is.na(par.jobs)) {
+  } else if ((!is.null(max.execbudget) || !is.null(target.fun.value)) && !is.na(par.jobs)) {
     mode = "slow.parallel"
   } else {
     mode = "normal"
@@ -96,10 +98,10 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
 
   # Treat Initial Design
   if (!is.null(design)) {
-    xs = dfRowsToList(design[, getParamIds(par.set, repeated = TRUE, with.nr = TRUE)], par.set)
+    xs = dfRowsToList(design[, getParamIds(par.set, repeated = TRUE, with.nr = TRUE), drop = FALSE], par.set)
 
     # evaluate initial design
-    if (! design.y.cols %in% colnames(design)) {
+    if (! all(design.y.cols %in% colnames(design))) {
       if (hasTrafo(par.set)) {
         xs.trafo = lapply(xs, trafoValue, par = par.set)
       } else {
@@ -131,7 +133,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
     wrap.fun2 = function(par.id = Sys.getpid()) {
       res = list()
       term = FALSE
-      i = 0
+      i = 1
       pid = Sys.getpid()
       while (!file.exists(path(par.path,"done")) || term == FALSE) {
         x = sampleValues(par.set, 1)
@@ -163,26 +165,27 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
         }
       }
     }
+    dir_delete(par.path)
+
     res.all = parallelMap(wrap.fun2, seq_len(par.jobs), level = "randomsearch.feval")
     res.all = unlist(res.all, recursive = FALSE)
     lapply(seq_along(res.all), function(i)
       addOptPathEl(opt.path, x = res.all[[i]]$x, y = res.all[[i]]$y, exec.time = res.all[[i]]$time, dob = i)
     )
   } else if (mode == "normal") {
-    res = list()
-      term = FALSE
-      i = 0
-      while (term == FALSE) {
-        x = sampleValues(par.set, 1)
-        x.trafo = trafoValue(x, par = par.set)
-        st = proc.time()
-        y = fun(x.trafo)
-        i = i + 1
-        st = proc.time() - st
-        addOptPathEl(opt.path, x = x, y = y, exec.time = st[3], dob = i)
-        # check termination
-        term = checkTermination(fun, y, i, time.start, target.fun.value, max.execbudget, max.evals)
-      }
+    term = FALSE
+    i = 0
+    while (term == FALSE) {
+      x = sampleValue(par.set)
+      x.trafo = trafoValue(x, par = par.set)
+      st = proc.time()
+      y = fun(x.trafo)
+      i = i + 1
+      st = proc.time() - st
+      addOptPathEl(opt.path, x = x, y = y, exec.time = st[3], dob = i)
+      # check termination
+      term = checkTermination(fun, y, i, time.start, target.fun.value, max.execbudget, max.evals)
+    }
   }
 
   time.end = Sys.time()
