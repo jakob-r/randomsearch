@@ -4,6 +4,7 @@
 #' @import ParamHelpers
 #' @import smoof
 #' @import purrr
+#' @import fs
 NULL
 
 .onLoad = function(libname, pkgname) { # nocov start

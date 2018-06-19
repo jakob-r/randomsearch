@@ -51,13 +51,17 @@
 randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, show.info = getOption("randomsearch.show.info", TRUE), design.y.cols = NULL, par.dir = "~/.randomsearch/", par.jobs = NULL) {
 
   assertDataFrame(design)
-  assertClass(smoof.fun, "smoof_function")
+  design.n = nrow(design) %??% 1
+  assertClass(fun, "smoof_function")
 
-  par.set = getParamSet(smoof.fun)
+  max.evals = asInt(max.evals, lower = design.n)
+  max.evals = max.evals - design.n
+
+  par.set = getParamSet(fun)
   x.ids = getParamIds(par.set, repeated = TRUE, with.nr = TRUE)
 
   if (is.null(design.y.cols)) {
-    if (getNumberOfObjectives(smoof.fun) == 1){
+    if (getNumberOfObjectives(fun) == 1){
       design.y.cols = "y"
     } else {
       design.y.cols = paste("y", seq_len(d), sep = "_")
@@ -70,7 +74,18 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
   }
   assertCount(par.jobs, low)
 
+  # are we in fast mode?
+  fast.mode = is.null(max.execbudget) && is.null(target.fun.value) && !is.null(max.evals)
+
   opt.path = makeOptPathDF(par.set = par.set, y.names = design.y.cols, minimize = shouldBeMinimized(fun), add.transformed.x = FALSE, include.exec.time = TRUE)
+
+  wrap.fun = function(...) {
+    st = proc.time()
+    y = fun(...)
+    st = proc.time() - st
+    list(y = y, time = st[3])
+  }
+
   time.start = Sys.time()
 
   # Treat Initial Design
@@ -84,35 +99,86 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
       } else {
         xs.trafo = xs
       }
-      wrap.fun = function(...) {
-        st = proc.time()
-        y = smoof.fun(...)
-        st = proc.time() - st
-        list(y = y, time = st[3])
-      }
       ys = parallelMap(wrap.fun, xs.trafo, level = "randomsearch.feval")
     # split y values
     } else {
       ys = design[, design.y.cols, drop = FALSE]
       ys = apply(ys, 1, function(y) list(y = y, time = NA_real_))
     }
-
     # add inital design to opt path
     lapply(seq_along(xs), function(i)
       addOptPathEl(opt.path, x = xs[[i]], y = ys[[i]]$y, dob = i, exec.time = ys[[i]]$time)
     )
   }
 
-  
-  
+  if (fast.mode) {
+    xs = sampleValues(par.set, max.evals, trafo = FALSE)
+    xs.trafo = lapply(xs, trafoValue, par = par.set)
+    ys = parallelMap(wrap.fun, xs.trafo, level = "randomsearch.feval")
+    lapply(seq_along(xs), function(i)
+      addOptPathEl(opt.path, x = xs[[i]], y = ys[[i]]$y, dob = i, exec.time = ys[[i]]$time)
+    )
+  } else {
+    par.id = paste0(sample(c(letters,LETTERS,0:9), 5), collapse = "")
+    par.path = path(par.dir, par.id)
+    dir_create(par.path)
+    wrap.fun2 = function(par.id = Sys.getpid()) {
+      res = list()
+      term = FALSE
+      i = 0
+      pid = Sys.getpid()
+      while (!file.exists(path(par.path,"done")) || isTRUE(term)) {
+        x = sampleValues(par.set, 1)
+        x.trafo = trafoValue(x, par = par.set)
+        st = proc.time()
+        y = fun(x.trafo)
+        i = i + 1
+        st = proc.time() - st
+        res = c(res, list(x = x, x.trafo = x.trafo, time = st[3]))
 
-  
+        # check termination
+        if (!is.null(target.fun.value)) {
+          if (shouldBeMinimized(fun)) {
+            term = y <= target.fun.value
+          } else {
+            term = y >= target.fun.value
+          } 
+        }
+        if (!term && !is.null(max.execbudget)) {
+          term = max.execbudget <= as.double(Sys.time() - time.start, units = "secs")
+        }
+        if (!term && !is.null(max.evals)) {
+          term = i >= max.evals
+        }
+        if (!term && !is.null(max.evals)) {
+          # look at all files of the scheme (par.id)_(i) and sum all i
+          files = dir_ls(par.path, regexp = "\\d*_")
+          files = basename(files)
+          files = regmatches(files, regexpr("(?<=_).*", files, perl = TRUE))
+          files = as.numeric(files)
+          sum(files)
+          term = sum(files)+1 >= max.evals # this node has not added itself yet
+        }
+        # write term file or counter file
+        if (term) {
+          file_create(path(par.path,"done"))
+        } else {
+          files = dir_ls(par.path, regexp = paste0(par.id, "_"))
+          file_delte(files)
+          file_create(path(par.path), paste0(par.id, "_", i))
+        }
+      }
+    }
+    res.all = parallelMap(wrap.fun2, seq_len(par.jobs), level = "randomsearch.feval")
+    res.all = unlist(res.all, recursive = FALSE)
+    lapply(seq_along(res.all), function(i)
+      addOptPathEl(opt.path, x = res.all[[i]]$x, y = res.all[[i]]$y, exec.time = res.all[[i]]$time)
+    )
+  } 
 
   time.end = Sys.time()
 
-  lapply(seq_along(xs), function(i)
-    addOptPathEl(opt.path, x = xs[[i]], y = ys[[i]]$y, dob = i, exec.time = ys[[i]]$time)
-  )
+
 
   return(opt.path)
   
