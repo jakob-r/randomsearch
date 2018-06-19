@@ -74,8 +74,14 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
   }
   assertCount(par.jobs, low)
 
-  # are we in fast mode?
-  fast.mode = is.null(max.execbudget) && is.null(target.fun.value) && !is.null(max.evals)
+  # what mode should we use
+  if (!is.null(max.evals) && is.null(max.execbudget) && is.null(target.fun.value)) {
+    mode = "fast.parallel"
+  } else if (!is.null(max.execbudget) || !is.null(target.fun.value) && !is.na(par.jobs)) {
+    mode = "slow.parallel"
+  } else {
+    mode = "normal"
+  }
 
   opt.path = makeOptPathDF(par.set = par.set, y.names = design.y.cols, minimize = shouldBeMinimized(fun), add.transformed.x = FALSE, include.exec.time = TRUE)
 
@@ -107,18 +113,18 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
     }
     # add inital design to opt path
     lapply(seq_along(xs), function(i)
-      addOptPathEl(opt.path, x = xs[[i]], y = ys[[i]]$y, dob = i, exec.time = ys[[i]]$time)
+      addOptPathEl(opt.path, x = xs[[i]], y = ys[[i]]$y, dob = 0, exec.time = ys[[i]]$time)
     )
   }
 
-  if (fast.mode) {
+  if (mode == "fast.parallel") {
     xs = sampleValues(par.set, max.evals, trafo = FALSE)
     xs.trafo = lapply(xs, trafoValue, par = par.set)
     ys = parallelMap(wrap.fun, xs.trafo, level = "randomsearch.feval")
     lapply(seq_along(xs), function(i)
       addOptPathEl(opt.path, x = xs[[i]], y = ys[[i]]$y, dob = i, exec.time = ys[[i]]$time)
     )
-  } else {
+  } else if (mode == "slow.parallel") {
     par.id = paste0(sample(c(letters,LETTERS,0:9), 5), collapse = "")
     par.path = path(par.dir, par.id)
     dir_create(par.path)
@@ -127,7 +133,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
       term = FALSE
       i = 0
       pid = Sys.getpid()
-      while (!file.exists(path(par.path,"done")) || isTRUE(term)) {
+      while (!file.exists(path(par.path,"done")) || term == FALSE) {
         x = sampleValues(par.set, 1)
         x.trafo = trafoValue(x, par = par.set)
         st = proc.time()
@@ -137,19 +143,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
         res = c(res, list(x = x, x.trafo = x.trafo, time = st[3]))
 
         # check termination
-        if (!is.null(target.fun.value)) {
-          if (shouldBeMinimized(fun)) {
-            term = y <= target.fun.value
-          } else {
-            term = y >= target.fun.value
-          } 
-        }
-        if (!term && !is.null(max.execbudget)) {
-          term = max.execbudget <= as.double(Sys.time() - time.start, units = "secs")
-        }
-        if (!term && !is.null(max.evals)) {
-          term = i >= max.evals
-        }
+        term = checkTermination(fun, y, i, time.start, target.fun.value, max.execbudget, max.evals)
         if (!term && !is.null(max.evals)) {
           # look at all files of the scheme (par.id)_(i) and sum all i
           files = dir_ls(par.path, regexp = "\\d*_")
@@ -172,13 +166,26 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
     res.all = parallelMap(wrap.fun2, seq_len(par.jobs), level = "randomsearch.feval")
     res.all = unlist(res.all, recursive = FALSE)
     lapply(seq_along(res.all), function(i)
-      addOptPathEl(opt.path, x = res.all[[i]]$x, y = res.all[[i]]$y, exec.time = res.all[[i]]$time)
+      addOptPathEl(opt.path, x = res.all[[i]]$x, y = res.all[[i]]$y, exec.time = res.all[[i]]$time, dob = i)
     )
-  } 
+  } else if (mode == "normal") {
+    res = list()
+      term = FALSE
+      i = 0
+      while (term == FALSE) {
+        x = sampleValues(par.set, 1)
+        x.trafo = trafoValue(x, par = par.set)
+        st = proc.time()
+        y = fun(x.trafo)
+        i = i + 1
+        st = proc.time() - st
+        addOptPathEl(opt.path, x = x, y = y, exec.time = st[3], dob = i)
+        # check termination
+        term = checkTermination(fun, y, i, time.start, target.fun.value, max.execbudget, max.evals)
+      }
+  }
 
   time.end = Sys.time()
-
-
 
   return(opt.path)
   

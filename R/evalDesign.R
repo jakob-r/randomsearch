@@ -31,11 +31,3 @@ evalDesign = function(design, smoof.fun, design.y.cols) {
   exec.times = unname(unlist(map_dbl(ys, "time")))
   setAttribute(y, "exec.times", exec.times)
 }
-
-if (FALSE) {
-  mydev()
-  parallelRegisterLevels(package = "randomsearch", levels = c("feval"))
-  smoof.fun = makeZDT1Function(dimensions = 2L)
-  design = generateRandomDesign(5, par.set = getParamSet(smoof.fun))
-  ys = evalDesign(design, smoof.fun, c("y_1", "y_2"))
-}
