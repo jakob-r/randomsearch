@@ -107,7 +107,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
       } else {
         xs.trafo = xs
       }
-      ys = parallelMap(wrap.fun, xs.trafo, level = "randomsearch.feval")
+      ys = parallelMap(wrap.fun, xs.trafo, level = "randomsearch.feval", simplify = FALSE)
     # split y values
     } else {
       ys = design[, design.y.cols, drop = FALSE]
@@ -122,7 +122,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
   if (mode == "fast.parallel") {
     xs = sampleValues(par.set, max.evals, trafo = FALSE)
     xs.trafo = lapply(xs, trafoValue, par = par.set)
-    ys = parallelMap(wrap.fun, xs.trafo, level = "randomsearch.feval")
+    ys = parallelMap(wrap.fun, xs.trafo, level = "randomsearch.feval", simplify = FALSE)
     lapply(seq_along(xs), function(i)
       addOptPathEl(opt.path, x = xs[[i]], y = ys[[i]]$y, dob = i, exec.time = ys[[i]]$time)
     )
@@ -142,7 +142,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
         y = fun(x.trafo)
         i = i + 1
         st = proc.time() - st
-        res = c(res, list(x = x, x.trafo = x.trafo, time = st[3]))
+        res = c(res, list(list(x = x, x.trafo = x.trafo, time = st[3], y = y)))
 
         # check termination
         term = checkTermination(fun, y, i, time.start, target.fun.value, max.execbudget, max.evals)
@@ -160,15 +160,16 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
           file_create(path(par.path,"done"))
         } else {
           files = dir_ls(par.path, regexp = paste0(par.id, "_"))
-          file_delte(files)
-          file_create(path(par.path), paste0(par.id, "_", i))
+          file_delete(files)
+          file_create(path(par.path, paste0(par.id, "_", i)))
         }
       }
+      return(res)
     }
-    dir_delete(par.path)
 
-    res.all = parallelMap(wrap.fun2, seq_len(par.jobs), level = "randomsearch.feval")
+    res.all = parallelMap(wrap.fun2, seq_len(par.jobs), level = "randomsearch.feval", simplify = FALSE)
     res.all = unlist(res.all, recursive = FALSE)
+    dir_delete(par.path)
     lapply(seq_along(res.all), function(i)
       addOptPathEl(opt.path, x = res.all[[i]]$x, y = res.all[[i]]$y, exec.time = res.all[[i]]$time, dob = i)
     )
