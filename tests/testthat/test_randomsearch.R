@@ -18,6 +18,15 @@ test_that("simple randomsearch works with init design", {
   }
 })
 
+test_that("simple randomsearch works with init design with y values", {
+  for (tn in names(testfs)) {
+    res = randomsearch(fun = testfs[[tn]], max.evals = 10, design = testdsy[[tn]])
+    expect_class(res, "OptPath")
+    opdf = as.data.frame(res)
+    expect_data_frame(opdf, nrow = 10)
+  }
+})
+
 test_that("simple randomsearch works with max.execbudget", {
   for (tn in names(testfs)) {
     res = randomsearch(fun = testfs[[tn]], max.evals = 10000, max.execbudget = 1)
