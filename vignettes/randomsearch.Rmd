@@ -1,5 +1,9 @@
 ---
 title: "randomsearch: A brief introduction"
+vignette: >
+  %\VignetteIndexEntry{Tree structured ParamSets}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE, cache = FALSE}
@@ -11,3 +15,27 @@ knitr::knit_hooks$set(document = function(x){
 })
 ```
 
+The package **randomsearch** optimizes a given [smoof function](https://cran.r-project.org/package=smoof).
+Use `makeSingleObjectiveFunction()` to wrap any function into a smoof function.
+It can make use of parallel resources through [prallelMap](https://cran.r-project.org/package=parallelMap).
+**randomsearch** has three internal operating modes:
+
+* *fast.parallel* is the default and used if only `max.evals` is defined as termination criterion. `max.execbudget` and `target.fun.value` have to be `NULL`.
+* *slow.parallel* is used if `max.execbudget` or `target.fun.value` have been set and `parallelStart` has been called without defined `level` or with `level = randomsearch.feval`.
+  In this mode `par.jobs` (defaults to `parallelGetOptions()$settings$cpus`) instances are started.
+  Each instance conducts a randomsearch until the termination criterion is met.
+  The instances communicate using a shared folder (`par.dir = ~/.randomsearch/`).
+* *normal* is used if no parallel mode is started and if `max.execbudget` or `target.fun.value` have been set. Note, that this introduces an overhead to *fast.parallel* even without parallelization because the termination criterion is checked after each evaluation.
+
+## Usage
+
+```r
+obj.fun = makeSingleObjectiveFunction(
+  fn = function(x) x[1]^2 + sin(x[2]),
+  par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
+  minimize = TRUE
+)
+res = randomsearch(obj.fun, max.evals = 30)
+getOptPathBestIndex(res)
+getOptPathEl(res, .Last.value)
+```

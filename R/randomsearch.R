@@ -71,7 +71,12 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
   assertCharacter(design.y.cols)
 
   if (is.null(par.jobs)) {
-    par.jobs = parallelGetOptions()$settings$cpus
+    par.opts = parallelGetOptions()$settings
+    if (is.na(par.opts$level) || par.opts$level == "randomsearch.feval") {
+      par.jobs = par.opts$cpus  
+    } else {
+      par.jobs = NA
+    }
   } else {
     assertCount(par.jobs)
   }
@@ -136,7 +141,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
       i = 1
       pid = Sys.getpid()
       while (!file.exists(path(par.path,"done")) || term == FALSE) {
-        x = sampleValues(par.set, 1)
+        x = sampleValue(par.set)
         x.trafo = trafoValue(x, par = par.set)
         st = proc.time()
         y = fun(x.trafo)
