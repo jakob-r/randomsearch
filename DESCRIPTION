@@ -19,7 +19,8 @@ Suggests:
     rmarkdown,
     testthat,
     covr,
-    knitr
+    knitr,
+    roxygen2
 LazyData: yes
 Encoding: UTF-8
 ByteCompile: yes
