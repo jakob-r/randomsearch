@@ -9,6 +9,9 @@ env:
 r:
 - devel
 - release
+r_packages:
+- covr
+- pkgdown
 before_script:
 - R --no-save <<< 'library("devtools"); document()'
 after_success:
