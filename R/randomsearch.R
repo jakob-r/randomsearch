@@ -16,8 +16,7 @@
 #'   If the y-values are not already present in design, randomsearch will evaluate the points.
 #'   If the parameters have corresponding trafo functions, the design must not be transformed before it is passed!
 #'   Functions to generate designs are available in \code{ParamHelpers}: \code{\link[ParamHelpers]{generateDesign}}, \code{\link[ParamHelpers]{generateGridDesign}}, \code{\link[ParamHelpers]{generateRandomDesign}}.
-#'   Default is \code{NULL}, which means \code{\link[ParamHelpers]{generateDesign}} is called and a design of size 4 times number of all parameters is created
-#'   The points are drawn via \code{\link[lhs]{maximinLHS}} to maximize the minimal distance between design points.
+#'   Default is \code{NULL}, which means no initial design.
 #' @param max.evals [\code{integer(1)}]\cr
 #'   Maximum number of evaulations of the objective functions.
 #'   Includes the initial design.
