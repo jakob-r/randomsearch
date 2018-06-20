@@ -48,6 +48,7 @@ test_that("simple randomsearch works with target.fun.value", {
 })
 
 test_that("parallel randomsearch works with max.execbudget", {
+  skip_on_os(os = "windows")
   for (tn in names(testfs)) {
     parallelMap::parallelStartMulticore(2)
     res = randomsearch(fun = testfs[[tn]], max.evals = 10000, max.execbudget = 1, par.jobs = 2)
@@ -59,12 +60,13 @@ test_that("parallel randomsearch works with max.execbudget", {
 })
 
 test_that("parallel randomsearch works with target.fun.value", {
+  skip_on_os(os = "windows")
   for (tn in names(testfs)) {
     fun = testfs[[tn]]
     target.fun.value = fun(sampleValue(getParamSet(fun)))
-    # parallelMap::parallelStartMulticore(2)
+    parallelMap::parallelStartMulticore(2)
     res = randomsearch(fun = fun, max.evals = 10000, target.fun.value = target.fun.value, par.jobs = 2)
-    # parallelMap::parallelStop()
+    parallelMap::parallelStop()
     expect_class(res, "OptPath")
     opdf = as.data.frame(res)
     expect_data_frame(opdf)

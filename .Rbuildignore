@@ -18,3 +18,5 @@
 ^vignettes/.+\.html$
 .github
 .covrignore
+README.Rmd
+^.+_cache$
