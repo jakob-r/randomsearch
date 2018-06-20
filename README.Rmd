@@ -11,16 +11,36 @@ Model-based optimization with [mlr](https://github.com/jakob-r/mlr/).
 * [Documentation](https://jakob-r.github.io/randomsearch/)
 * [Issues, Requests and Bug Tracker](https://github.com/jakob-r/randomsearch/issues)
 
+```{r setup, include=FALSE}
+set.seed(123)
+knitr::opts_chunk$set(cache = TRUE, collapse = FALSE, warning = FALSE, error = FALSE)
+library("randomsearch")
+```
+
 # Installation
 
 We reccomend to install the official release version:
 
-```r
+```{r inst, eval = FALSE}
 install.packages("randomsearch")
 ```
 
 For experimental use you can install the latest development version:
 
-```r
+```{r inst_dev, eval = FALSE}
 devtools::install_github("jakob-r/randomsearch")
+```
+
+# Usage
+
+```{r usage}
+obj.fun = makeSingleObjectiveFunction(
+  fn = function(x) x[1]^2 + sin(x[2]),
+  par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
+  minimize = TRUE
+)
+res = randomsearch(obj.fun, max.evals = 10)
+ind = getOptPathBestIndex(res)
+getOptPathEl(res, ind)
+as.data.frame(res)
 ```

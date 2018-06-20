@@ -29,13 +29,33 @@ It can make use of parallel resources through [prallelMap](https://cran.r-projec
 
 ## Usage
 
-```r
+```{r usage}
 obj.fun = makeSingleObjectiveFunction(
   fn = function(x) x[1]^2 + sin(x[2]),
   par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
   minimize = TRUE
 )
 res = randomsearch(obj.fun, max.evals = 30)
-getOptPathBestIndex(res)
-getOptPathEl(res, .Last.value)
+ind = getOptPathBestIndex(res)
+getOptPathEl(res, ind)
 ```
+
+## Parallel Usage
+*Note:* For Windows use `parallelStartSocket()`.
+
+```{r parallel_usage}
+obj.fun = makeSingleObjectiveFunction(
+  fn = function(x) {
+    Sys.sleep(runif(1))
+    x[1]^2 + sin(x[2])
+  },
+  par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
+  minimize = TRUE
+)
+parallelMap::parallelStartMulticore(cpus = 2, level = "randomsearch.feval")
+res = randomsearch(obj.fun, max.execbudget = 2, max.evals = 1000)
+parallelMap::parallelStop()
+ind = getOptPathBestIndex(res)
+getOptPathEl(res, ind)
+```
+
