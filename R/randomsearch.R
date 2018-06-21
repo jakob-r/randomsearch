@@ -30,6 +30,8 @@
 #'   Multiple for multi-crit optimization.
 #' @param par.dir [\code{character(1)}]\cr
 #'   Location to store parallel communication files.
+#'   Defaults to `tempdir()/randomsearch` which might not be suitable for parallelization methods that work on multiple machines. 
+#'   Those need a shared directory.
 #' @param par.jobs [\code{integer(1)}]\cr
 #'   How many parallel jobs do jo want to run to evaluate the random search?
 #' @return [\code{\link[ParamHelpers]{OptPath}}
@@ -43,7 +45,7 @@
 #' 
 #' # start random search
 #' res = randomsearch(obj.fun, max.evals = 10)
-randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, design.y.cols = NULL, par.dir = "~/.randomsearch/", par.jobs = NULL) {
+randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, design.y.cols = NULL, par.dir = NULL, par.jobs = NULL) {
 
   assertDataFrame(design, null.ok = TRUE)
   design.n = nrow(design) %??% 0
@@ -132,6 +134,13 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
     )
   } else if (mode == "slow.parallel") {
     par.id = paste0(sample(c(letters,LETTERS,0:9), 5), collapse = "")
+    if (is.null(par.dir)) {
+      par.dir = path(tempdir(), "randomsearch")
+      dir_create(par.dir)
+    } else {
+      par.dir = path_expand(par.dir)
+      assert_directory(path.dir)
+    }
     par.path = path(par.dir, par.id)
     dir_create(par.path)
     wrap.fun2 = function(par.id = Sys.getpid()) {

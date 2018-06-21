@@ -40,7 +40,7 @@ getOptPathEl(res, ind)
 ## Parallel Usage
 *Note:* For Windows use `parallelStartSocket()`.
 
-```{r parallel_usage}
+```{r parallel_usage, eval = FALSE}
 obj.fun = makeSingleObjectiveFunction(
   fn = function(x) {
     Sys.sleep(runif(1))
