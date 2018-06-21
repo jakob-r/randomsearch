@@ -139,7 +139,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
       dir_create(par.dir)
     } else {
       par.dir = path_expand(par.dir)
-      assert_directory(path.dir)
+      assert_directory(par.dir)
     }
     par.path = path(par.dir, par.id)
     dir_create(par.path)

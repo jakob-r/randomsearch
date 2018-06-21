@@ -61,7 +61,7 @@ test_that("parallel randomsearch works with target.fun.value", {
   for (tn in names(testfs)) {
     fun = testfs[[tn]]
     target.fun.value = fun(sampleValue(getParamSet(fun)))
-    res = randomsearch(fun = fun, max.evals = 10000, target.fun.value = target.fun.value, par.jobs = 2)
+    res = randomsearch(fun = fun, max.evals = 10000, target.fun.value = target.fun.value, par.jobs = 2, max.execbudget = 2)
     expect_class(res, "OptPath")
     opdf = as.data.frame(res)
     expect_data_frame(opdf)

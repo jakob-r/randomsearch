@@ -5,8 +5,8 @@
 \title{Optimizes a function with random search.}
 \usage{
 randomsearch(fun, design = NULL, max.evals = 20, max.execbudget = NULL,
-  target.fun.value = NULL, design.y.cols = NULL,
-  par.dir = "~/.randomsearch/", par.jobs = NULL)
+  target.fun.value = NULL, design.y.cols = NULL, par.dir = NULL,
+  par.jobs = NULL)
 }
 \arguments{
 \item{fun}{[\code{smoof_function}]\cr
@@ -41,7 +41,9 @@ One for single-crit optimization.
 Multiple for multi-crit optimization.}
 
 \item{par.dir}{[\code{character(1)}]\cr
-Location to store parallel communication files.}
+Location to store parallel communication files.
+Defaults to `tempdir()/randomsearch` which might not be suitable for parallelization methods that work on multiple machines. 
+Those need a shared directory.}
 
 \item{par.jobs}{[\code{integer(1)}]\cr
 How many parallel jobs do jo want to run to evaluate the random search?}
