@@ -108,11 +108,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
 
     # evaluate initial design
     if (! all(design.y.cols %in% colnames(design))) {
-      if (hasTrafo(par.set)) {
-        xs.trafo = lapply(xs, trafoValue, par = par.set)
-      } else {
-        xs.trafo = xs
-      }
+      xs.trafo = lapply(xs, trafoValue, par = par.set)
       ys = parallelMap(wrap.fun, xs.trafo, level = "randomsearch.feval", simplify = FALSE)
     # split y values
     } else {
