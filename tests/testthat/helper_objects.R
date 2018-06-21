@@ -1,6 +1,6 @@
 testfs = list(
   sphere.1d = makeSphereFunction(dimensions = 1L),
-  sphere.2d = makeSphereFunction(dimensions = 2L),
+  sphere.2d = convertToMaximization(makeSphereFunction(dimensions = 2L)),
   zdt1.2d = makeZDT1Function(dimensions = 2L)
 )
 testds = list(
