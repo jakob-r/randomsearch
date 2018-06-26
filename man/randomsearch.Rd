@@ -60,4 +60,5 @@ obj.fun = makeSingleObjectiveFunction(
  par.set = makeNumericParamSet(id = "x", lower = -1, upper = 1, len = 2)
 )
 res = randomsearch(obj.fun, max.evals = 10)
+summary(res)
 }

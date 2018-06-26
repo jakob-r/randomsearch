@@ -42,6 +42,7 @@
 #'  par.set = makeNumericParamSet(id = "x", lower = -1, upper = 1, len = 2)
 #' )
 #' res = randomsearch(obj.fun, max.evals = 10)
+#' summary(res)
 randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, design.y.cols = NULL, par.dir = NULL, par.jobs = NULL) {
 
   assertDataFrame(design, null.ok = TRUE)
@@ -191,8 +192,6 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
     }
   }
 
-  time.end = Sys.time()
-
+  class(opt.path) = c("RandomsearchResult", class(opt.path))
   return(opt.path)
-  
 }
