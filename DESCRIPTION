@@ -1,6 +1,6 @@
 Package: randomsearch
 Title: Random Search for Smoof Functions
-Description: Simple Random Search function for the smoof and ParamHelpers ecosystem. Implemented with parallelization in mind.
+Description: Simple Random Search function for the Smoof and ParamHelpers ecosystem. Implemented with parallelization in mind.
 Authors@R: c(
     person("Jakob", "Richter", email = "code@jakob-r.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0003-4481-5554"))
     )
