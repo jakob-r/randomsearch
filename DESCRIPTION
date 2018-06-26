@@ -17,7 +17,6 @@ Imports:
 Suggests:
     rmarkdown,
     testthat,
-    covr,
     knitr,
     roxygen2
 LazyData: yes
