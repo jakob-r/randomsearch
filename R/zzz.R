@@ -2,7 +2,6 @@
 #' @import parallelMap
 #' @import ParamHelpers
 #' @import smoof
-#' @import purrr
 #' @import fs
 NULL
 
