@@ -34,7 +34,7 @@
 #'   Those need a shared directory.
 #' @param par.jobs [\code{integer(1)}]\cr
 #'   How many parallel jobs do jo want to run to evaluate the random search?
-#' @return [\code{\link[ParamHelpers]{OptPath}}
+#' @return [\code{\link[ParamHelpers]{OptPath}}]
 #' @export
 #' @examples
 #' obj.fun = makeSingleObjectiveFunction(

@@ -42,25 +42,22 @@ Multiple for multi-crit optimization.}
 
 \item{par.dir}{[\code{character(1)}]\cr
 Location to store parallel communication files.
-Defaults to `tmpfile()` which might not be suitable for parallelization methods that work on multiple machines. 
+Defaults to \code{tmpfile()} which might not be suitable for parallelization methods that work on multiple machines. 
 Those need a shared directory.}
 
 \item{par.jobs}{[\code{integer(1)}]\cr
 How many parallel jobs do jo want to run to evaluate the random search?}
 }
 \value{
-[\code{\link[ParamHelpers]{OptPath}}
+[\code{\link[ParamHelpers]{OptPath}}]
 }
 \description{
-This function is analog to `mlrMBO::mbo` and can be parallelized.
+This function is analog to \code{\link[mlrMBO]{mbo}} and can be parallelized.
 }
 \examples{
-# simple 2d objective function
 obj.fun = makeSingleObjectiveFunction(
  fn = function(x) x[1]^2 + sin(x[2]),
  par.set = makeNumericParamSet(id = "x", lower = -1, upper = 1, len = 2)
 )
-
-# start random search
 res = randomsearch(obj.fun, max.evals = 10)
 }
