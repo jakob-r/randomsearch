@@ -42,7 +42,7 @@ Multiple for multi-crit optimization.}
 
 \item{par.dir}{[\code{character(1)}]\cr
 Location to store parallel communication files.
-Defaults to `tempdir()/randomsearch` which might not be suitable for parallelization methods that work on multiple machines. 
+Defaults to `tmpfile()` which might not be suitable for parallelization methods that work on multiple machines. 
 Those need a shared directory.}
 
 \item{par.jobs}{[\code{integer(1)}]\cr
