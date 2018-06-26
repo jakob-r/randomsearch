@@ -30,7 +30,7 @@
 #'   Multiple for multi-crit optimization.
 #' @param par.dir [\code{character(1)}]\cr
 #'   Location to store parallel communication files.
-#'   Defaults to `tempdir()/randomsearch` which might not be suitable for parallelization methods that work on multiple machines. 
+#'   Defaults to `tmpfile()` which might not be suitable for parallelization methods that work on multiple machines. 
 #'   Those need a shared directory.
 #' @param par.jobs [\code{integer(1)}]\cr
 #'   How many parallel jobs do jo want to run to evaluate the random search?
@@ -129,22 +129,18 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
       addOptPathEl(opt.path, x = xs[[i]], y = ys[[i]]$y, dob = i, exec.time = ys[[i]]$time)
     )
   } else if (mode == "slow.parallel") {
-    par.id = paste0(sample(c(letters,LETTERS,0:9), 5), collapse = "")
     if (is.null(par.dir)) {
-      par.dir = path(tempdir(), "randomsearch")
-      dir_create(par.dir)
+      par.dir = tempfile()
     } else {
       par.dir = path_expand(par.dir)
-      assert_directory(par.dir)
     }
-    par.path = path(par.dir, par.id)
-    dir_create(par.path)
+    dir_create(par.dir)
     wrap.fun2 = function(par.id = Sys.getpid()) {
       res = list()
       term = FALSE
       i = 1
       pid = Sys.getpid()
-      while (!file.exists(path(par.path,"done")) || term == FALSE) {
+      while (!file.exists(path(par.dir,"done")) || term == FALSE) {
         x = sampleValue(par.set)
         x.trafo = trafoValue(x, par = par.set)
         st = proc.time()
@@ -157,7 +153,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
         term = checkTermination(fun, y, i, time.start, target.fun.value, max.execbudget, max.evals)
         if (!term && !is.null(max.evals)) {
           # look at all files of the scheme (par.id)_(i) and sum all i
-          files = dir_ls(par.path, regexp = "\\d*_")
+          files = dir_ls(par.dir, regexp = "\\d*_")
           files = basename(files)
           files = regmatches(files, regexpr("(?<=_).*", files, perl = TRUE))
           files = as.numeric(files)
@@ -166,11 +162,11 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
         }
         # write term file or counter file
         if (term) {
-          file_create(path(par.path,"done"))
+          file_create(path(par.dir, "done"))
         } else {
-          files = dir_ls(par.path, regexp = paste0(par.id, "_"))
+          files = dir_ls(par.dir, regexp = paste0(par.id, "_"))
           file_delete(files)
-          file_create(path(par.path, paste0(par.id, "_", i)))
+          file_create(path(par.dir, paste0(par.id, "_", i)))
         }
       }
       return(res)
@@ -178,7 +174,7 @@ randomsearch = function(fun, design = NULL, max.evals = 20, max.execbudget = NUL
 
     res.all = parallelMap(wrap.fun2, seq_len(par.jobs), level = "randomsearch.feval", simplify = FALSE)
     res.all = unlist(res.all, recursive = FALSE)
-    dir_delete(par.path)
+    dir_delete(par.dir)
     lapply(seq_along(res.all), function(i)
       addOptPathEl(opt.path, x = res.all[[i]]$x, y = res.all[[i]]$y, exec.time = res.all[[i]]$time, dob = i)
     )
