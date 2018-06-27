@@ -1,3 +1,6 @@
+---
+output: github_document
+---
 # randomsearch
 
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/randomsearch)](https://cran.r-project.org/package=randomsearch)
@@ -6,7 +9,9 @@
 [![Coverage Status](https://coveralls.io/repos/github/jakob-r/randomsearch/badge.svg?branch=master)](https://coveralls.io/github/jakob-r/randomsearch?branch=master)
 [![Monthly RStudio CRAN Downloads](https://cranlogs.r-pkg.org/badges/randomsearch)](https://CRAN.R-project.org/package=randomsearch)
 
-Model-based optimization with [mlr](https://github.com/jakob-r/mlr/).
+## Random Search for Expensive Functions
+
+ Simple Random Search function for the [smoof](https://cran.r-project.org/package=smoof) and [ParamHelpers](https://cran.r-project.org/package=ParamHelpers) ecosystem with termination criteria and parallelization.
 
 * [Documentation](https://jakob-r.github.io/randomsearch/)
 * [Issues, Requests and Bug Tracker](https://github.com/jakob-r/randomsearch/issues)
