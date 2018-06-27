@@ -24,7 +24,7 @@ library("randomsearch")
 
 # Installation
 
-We reccomend to install the official release version:
+We recommend to install the official release version:
 
 ```{r inst, eval = FALSE}
 install.packages("randomsearch")
