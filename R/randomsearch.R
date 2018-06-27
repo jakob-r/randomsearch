@@ -33,7 +33,9 @@
 #'   Defaults to \code{tmpfile()} which might not be suitable for parallelization methods that work on multiple machines. 
 #'   Those need a shared directory.
 #' @param par.jobs [\code{integer(1)}]\cr
-#'   How many parallel jobs do jo want to run to evaluate the random search?
+#'   How many parallel jobs do you want to run to evaluate the random search?
+#'   Default is \code{NULL} which means 1 if no \code{parallelStart*} function is called.
+#'   Otherwise it will detect the number through \code{\link[parallelMap]{parallelGetOptions}}.
 #' @return [\code{\link[ParamHelpers]{OptPath}}]
 #' @export
 #' @examples

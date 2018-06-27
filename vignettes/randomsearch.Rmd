@@ -33,8 +33,11 @@ obj.fun = makeSingleObjectiveFunction(
   minimize = TRUE
 )
 res = randomsearch(obj.fun, max.evals = 30)
-ind = getOptPathBestIndex(res)
-getOptPathEl(res, ind)
+rs.summary = summary(res)
+rs$best.x
+rs$best.y
+
+tail(as.data.frame(res))
 ```
 
 ## Parallel Usage
@@ -51,8 +54,17 @@ obj.fun = makeSingleObjectiveFunction(
 )
 parallelMap::parallelStartMulticore(cpus = 2, level = "randomsearch.feval")
 res = randomsearch(obj.fun, max.execbudget = 2, max.evals = 1000)
-parallelMap::parallelStop()
-ind = getOptPathBestIndex(res)
-getOptPathEl(res, ind)
+summary(res)
 ```
 
+## Multi-objective optimization
+
+```{r multi_objective, eval = TRUE}
+obj.fun = makeMultiObjectiveFunction(
+  fn = function(x) c(x[1]^2 + sin(x[2]), cos(x[1])),
+  par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
+  minimize = c(TRUE, TRUE)
+)
+res = randomsearch(obj.fun, max.evals = 30)
+summary(res)
+```

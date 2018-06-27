@@ -19,7 +19,6 @@ summary.RandomsearchResult = function(object, ...) {
     res = list(best.ind = ind, best.x = best.el$x, best.y = best.el$y, opt.path = object)
     class(res) = c("RandomsearchResultSummarySingleCrit", class(res))
   } else {
-    cat("Multiobjective Search Pareto Front", "\n")
     pf = getOptPathParetoFront(object)
     opdf = as.data.frame(object, include.rest = FALSE)
     pfc = merge(opdf, pf, all.x = FALSE, all.y = TRUE)
