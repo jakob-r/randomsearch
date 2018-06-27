@@ -16,7 +16,7 @@ before_script:
 - R --no-save <<< 'library("devtools"); document()'
 after_success:
 - 'if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_BRANCH" == "master" && "$TRAVIS_R_VERSION_STRING" == "release" && "$TRAVIS_EVENT_TYPE" != "cron" ]] ; then
-    R --no-save <<< "devtools::install(); pkgdown::build_site()";
+    R --no-save <<< "devtools::install(); pkgdown::build_site(); knitr::knit('README.Rmd')";
     git checkout master;
     export TRAVIS_COMMIT_MSG="$(git log --format=%B --no-merges -n 1)";
     git config --global user.name "Travis CI";
