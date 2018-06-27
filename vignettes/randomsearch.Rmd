@@ -33,7 +33,7 @@ obj.fun = makeSingleObjectiveFunction(
   minimize = TRUE
 )
 res = randomsearch(obj.fun, max.evals = 30)
-rs.summary = summary(res)
+rs = summary(res)
 rs$best.x
 rs$best.y
 
