@@ -4,6 +4,12 @@ testfs = list(
   zdt1.2d = makeZDT1Function(dimensions = 2L)
 )
 
+testfs_nosmoof = list(
+  sphere.1d = list(fun = function(x) x^2, upper = 5, lower = -5, minimize = TRUE),
+  sphere.2d = list(fun = function(x) -1 * sum(x)^2, upper = 5, lower = -5, minimize = FALSE),
+  multi = list(fun = function(x) c(x^2, -1 * x^2), upper = 5, lower = -5, minimize = c(TRUE, FALSE))
+)
+
 testds = list(
   sphere.1d = generateRandomDesign(5L, getParamSet(testfs$sphere.1d)),
   sphere.2d = generateRandomDesign(10L, getParamSet(testfs$sphere.2d)),

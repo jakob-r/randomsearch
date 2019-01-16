@@ -1,8 +1,7 @@
-pandoc: 2.2.1
-pkgdown: 1.1.0
+pandoc: '2.5'
+pkgdown: 1.1.0.9000
 pkgdown_sha: ~
-articles:
-  randomsearch: randomsearch.html
+articles: []
 urls:
   reference: https://jakob-r.github.io/randomsearch/reference
   article: https://jakob-r.github.io/randomsearch/articles

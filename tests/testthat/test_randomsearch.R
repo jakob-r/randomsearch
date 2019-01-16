@@ -87,3 +87,13 @@ test_that("parallel randomsearch works with parallelMap", {
     expect_data_frame(opdf)
   }
 })
+
+test_that("randomsearch works with normal functions", {
+  for (set in testfs_nosmoof) {
+    res = randomsearch(set$fun, lower = set$lower, upper = set$upper, minimize = set$minimize, max.evals = 10)
+    expect_class(res, c("OptPath", "RandomsearchResult"))
+    opdf = as.data.frame(res)
+    expect_data_frame(opdf, nrow = 10)
+    expect_output(print(res), "Randomsearch Result:")
+  }
+})

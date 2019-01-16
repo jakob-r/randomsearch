@@ -12,6 +12,8 @@ set.seed(123)
 knitr::opts_chunk$set(cache = TRUE, collapse = FALSE)
 ```
 
+# randomsearch
+
 The package **randomsearch** optimizes a given [smoof function](https://cran.r-project.org/package=smoof).
 Use `makeSingleObjectiveFunction()` to wrap any function into a smoof function.
 It can make use of parallel resources through [prallelMap](https://cran.r-project.org/package=parallelMap).
@@ -20,16 +22,45 @@ It can make use of parallel resources through [prallelMap](https://cran.r-projec
 * *fast.parallel* is the default and used if only `max.evals` is defined as termination criterion. `max.execbudget` and `target.fun.value` have to be `NULL`.
 * *slow.parallel* is used if `max.execbudget` or `target.fun.value` have been set and `parallelStart` has been called without defined `level` or with `level = randomsearch.feval`.
   In this mode `par.jobs` (defaults to `parallelGetOptions()$settings$cpus`) instances are started.
-  Each instance conducts a randomsearch until the termination criterion is met.
+  Each instance conducts a random search until the termination criterion is met.
   The instances communicate using a shared folder (`par.dir = ~/.randomsearch/`).
 * *normal* is used if no parallel mode is started and if `max.execbudget` or `target.fun.value` have been set. Note, that this introduces an overhead to *fast.parallel* even without parallelization because the termination criterion is checked after each evaluation.
 
 ## Usage
 
+Simple usage with functions that use a vector as input:
+
+```{r simple usage}
+fun = function(x) x[1]^2 + sin(x[2])
+res = randomsearch(fun, lower = c(-1, -1), upper = c(2,2), minimize = TRUE, max.evals = 30)
+rs = summary(res)
+rs$best.x
+rs$best.y
+
+tail(as.data.frame(res))
+```
+
+### Discrete and hierarchical search spaces
+
+For usage with more complicated search spaces you have to define a smoof function.
+This allows you to tune over discrete parameters and even hierarchical parameter sets like in this example.
+Here the parameter `y` is only active if `a==a2`.
+
 ```{r usage}
+fun = function(x) {
+  if (x$a == "a1") {
+    x$x^2
+  } else if (x$a == "a2") {
+    sin(x$x * x$y) + 1
+  }
+}
 obj.fun = makeSingleObjectiveFunction(
-  fn = function(x) x[1]^2 + sin(x[2]),
-  par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
+  fn = fun,
+  par.set = makeParamSet(
+    makeDiscreteParam("a", values = c("a1", "a2")),
+    makeNumericParam("x", lower = -3, upper = 3),
+    makeNumericParam("y", lower = 0, upper = 2, requires = quote(a == a1))
+  ),
   minimize = TRUE
 )
 res = randomsearch(obj.fun, max.evals = 30)
@@ -40,31 +71,51 @@ rs$best.y
 tail(as.data.frame(res))
 ```
 
-## Parallel Usage
+### Parallel Usage
 *Note:* For Windows use `parallelStartSocket()`.
 
 ```{r parallel_usage, eval = FALSE}
-obj.fun = makeSingleObjectiveFunction(
-  fn = function(x) {
-    Sys.sleep(runif(1))
-    x[1]^2 + sin(x[2])
-  },
-  par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
-  minimize = TRUE
-)
+fun = function(x) {
+  Sys.sleep(runif(1))
+  x[1]^2 + sin(x[2])
+}
+
 parallelMap::parallelStartMulticore(cpus = 2, level = "randomsearch.feval")
-res = randomsearch(obj.fun, max.execbudget = 2, max.evals = 1000)
+res = randomsearch(fun, lower = c(-1, -1), upper = c(2,2), minimize = TRUE, max.execbudget = 2, max.evals = 1000)
 summary(res)
 ```
 
 ## Multi-objective optimization
 
+_Note:_ `randomsearch()` detects a multi-objective optimization by the length of the `minimize` vector.
+
 ```{r multi_objective, eval = TRUE}
+obj.fun = function(x) c(x[1]^2 + sin(x[2]), cos(x[1]))
+res = randomsearch(obj.fun, lower = c(-1, -1), upper = c(2,2), minimize = c(TRUE, TRUE), max.evals = 30)
+summary(res)
+```
+
+Of course multi-objective optimization works with smoof functions as well.
+A multi-objective smoof function is constructed as follows:
+
+```{r multi_objective_smoof}
 obj.fun = makeMultiObjectiveFunction(
   fn = function(x) c(x[1]^2 + sin(x[2]), cos(x[1])),
   par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
   minimize = c(TRUE, TRUE)
 )
-res = randomsearch(obj.fun, max.evals = 30)
+res = randomsearch(obj.fun, max.evals = 10)
+```
+
+## Augment random search
+
+You can simply augment the results of a random search with additional random search results by converting the old result to a `data.frame` and use it as an input for a new random search.
+
+```{r augment}
+fun = function(x) x[1]^2 + sin(x[2]) + 1
+res = randomsearch(fun, lower = c(-1, -1), upper = c(2,2), minimize = TRUE, max.evals = 10)
+summary(res)
+des = as.data.frame(res)
+res = randomsearch(fun, lower = c(-1, -1), upper = c(2,2), minimize = TRUE, max.evals = 1000, target.fun.value = -0.4)
 summary(res)
 ```

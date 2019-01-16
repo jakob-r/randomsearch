@@ -4,19 +4,32 @@
 \alias{randomsearch}
 \title{Optimizes a function with random search.}
 \usage{
-randomsearch(fun, design = NULL, max.evals = 20, max.execbudget = NULL,
-  target.fun.value = NULL, design.y.cols = NULL, par.dir = NULL,
-  par.jobs = NULL)
+randomsearch(fun, ...)
 }
 \arguments{
-\item{fun}{[\code{smoof_function}]\cr
+\item{fun}{[\code{smoof_function}|\code{function}]\cr
 Fitness function to optimize.
+Can be eiter a \code{smoof_function} or a normal function that takes the numeric vector over that should be optimized as the first argument.
 For one dimensional target functions you can obtain a \code{smoof_function} by using \code{\link[smoof]{makeSingleObjectiveFunction}}.
 For multi dimensional functions use \code{\link[smoof]{makeMultiObjectiveFunction}}.
-It is possible to return even more information which will be stored
-in the optimization path. To achieve this, simply append the attribute \dQuote{extras}
-to the return value of the target function. This has to be a named list of scalar values.
+It is possible to return even more information which will be stored in the optimization path. 
+To achieve this, simply append the attribute \dQuote{extras} to the return value of the target function. 
+This has to be a named list of scalar values.
 Each of these values will be stored additionally in the optimization path.}
+
+\item{...}{\cr
+Additional arguments that will be passed to each call of \code{fun}.}
+
+\item{lower}{[\code{numeric()}] \cr
+Lower bounds on the variables.}
+
+\item{upper}{[\code{numeric()}] \cr
+Upper bounds on the variables.}
+
+\item{minimize}{[\code{logical()}]\cr
+Wheter the function should be minimized or maximized.
+If this is a vector we will assume it is a multi-objective optimization.
+Has to have the same length as the output of the objective function \code{fun}.}
 
 \item{design}{[\code{data.frame}]\cr
 Initial design as data frame.
