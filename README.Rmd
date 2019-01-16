@@ -41,13 +41,10 @@ devtools::install_github("jakob-r/randomsearch")
 # Usage
 
 ```{r usage}
-obj.fun = makeSingleObjectiveFunction(
-  fn = function(x) x[1]^2 + sin(x[2]),
-  par.set = makeNumericParamSet(len = 2, lower = -1, upper = 2),
-  minimize = TRUE
-)
-res = randomsearch(obj.fun, max.evals = 10)
-ind = getOptPathBestIndex(res)
-getOptPathEl(res, ind)
-as.data.frame(res)
+library(randomsearch)
+fun = function(x) x[1]^2 + sin(x[2])
+res = randomsearch(fun, lower = c(-1, -2), upper = c(2,4), minimize = TRUE, max.evals = 30)
+summary(res)
 ```
+
+For a more detailed documentation you can check the Vignette.

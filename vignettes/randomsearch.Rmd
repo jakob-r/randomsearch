@@ -51,7 +51,7 @@ fun = function(x) {
   if (x$a == "a1") {
     x$x^2
   } else if (x$a == "a2") {
-    sin(x$x * x$y) + 1
+    sin(x$x * x$z) + 1
   }
 }
 obj.fun = makeSingleObjectiveFunction(
@@ -59,9 +59,10 @@ obj.fun = makeSingleObjectiveFunction(
   par.set = makeParamSet(
     makeDiscreteParam("a", values = c("a1", "a2")),
     makeNumericParam("x", lower = -3, upper = 3),
-    makeNumericParam("y", lower = 0, upper = 2, requires = quote(a == a1))
+    makeNumericParam("z", lower = 0, upper = 2, requires = quote(a == "a2"))
   ),
-  minimize = TRUE
+  minimize = TRUE,
+  has.simple.signature = FALSE
 )
 res = randomsearch(obj.fun, max.evals = 30)
 rs = summary(res)
@@ -82,6 +83,7 @@ fun = function(x) {
 
 parallelMap::parallelStartMulticore(cpus = 2, level = "randomsearch.feval")
 res = randomsearch(fun, lower = c(-1, -1), upper = c(2,2), minimize = TRUE, max.execbudget = 2, max.evals = 1000)
+parallelMap::parallelStop()
 summary(res)
 ```
 
@@ -112,7 +114,7 @@ res = randomsearch(obj.fun, max.evals = 10)
 You can simply augment the results of a random search with additional random search results by converting the old result to a `data.frame` and use it as an input for a new random search.
 
 ```{r augment}
-fun = function(x) x[1]^2 + sin(x[2]) + 1
+fun = function(x) x[1]^2 + sin(x[2])
 res = randomsearch(fun, lower = c(-1, -1), upper = c(2,2), minimize = TRUE, max.evals = 10)
 summary(res)
 des = as.data.frame(res)
