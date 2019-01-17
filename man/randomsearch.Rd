@@ -28,7 +28,7 @@ To achieve this, simply append the attribute \dQuote{extras} to the return value
 This has to be a named list of scalar values.
 Each of these values will be stored additionally in the optimization path.}
 
-\item{...}{\cr
+\item{...}{[any] \cr
 Additional arguments that will be passed to each call of \code{fun}.}
 
 \item{design}{[\code{data.frame}]\cr

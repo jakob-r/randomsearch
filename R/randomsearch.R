@@ -12,7 +12,7 @@
 #'   To achieve this, simply append the attribute \dQuote{extras} to the return value of the target function. 
 #'   This has to be a named list of scalar values.
 #'   Each of these values will be stored additionally in the optimization path.
-#' @param ... \cr
+#' @param ... [any] \cr
 #'   Additional arguments that will be passed to each call of \code{fun}.
 #' @return [\code{\link[ParamHelpers]{OptPath}}]
 #' @export
