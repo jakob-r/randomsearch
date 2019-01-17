@@ -1,25 +1,34 @@
 #' @title Optimizes a function with random search.
 #'
 #' @description
-#' This function is analog to \code{\link[mlrMBO]{mbo}} and can be parallelized.
+#' This function conducts a random search on the given function with the support of parallelization and multiple termination criteria.
 #'
 #' @param fun [\code{smoof_function}|\code{function}]\cr
 #'   Fitness function to optimize.
-#'   Can be eiter a \code{smoof_function} or a normal function that takes the numeric vector over that should be optimized as the first argument.
+#'   Can be either a \code{smoof_function} or a normal function that takes the numeric vector over that should be optimized as the first argument.
 #'   For one dimensional target functions you can obtain a \code{smoof_function} by using \code{\link[smoof]{makeSingleObjectiveFunction}}.
 #'   For multi dimensional functions use \code{\link[smoof]{makeMultiObjectiveFunction}}.
 #'   It is possible to return even more information which will be stored in the optimization path. 
 #'   To achieve this, simply append the attribute \dQuote{extras} to the return value of the target function. 
 #'   This has to be a named list of scalar values.
 #'   Each of these values will be stored additionally in the optimization path.
-#' @param lower [\code{numeric()}] \cr
-#'   Lower bounds on the variables.
-#' @param upper [\code{numeric()}] \cr
-#'   Upper bounds on the variables.
-#' @param minimize [\code{logical()}]\cr
-#'   Wheter the function should be minimized or maximized.
-#'   If this is a vector we will assume it is a multi-objective optimization.
-#'   Has to have the same length as the output of the objective function \code{fun}.
+#' @param ... \cr
+#'   Additional arguments that will be passed to each call of \code{fun}.
+#' @return [\code{\link[ParamHelpers]{OptPath}}]
+#' @export
+#' @examples
+#' obj.fun = makeSingleObjectiveFunction(
+#'  fn = function(x) x[1]^2 + sin(x[2]),
+#'  par.set = makeNumericParamSet(id = "x", lower = -1, upper = 1, len = 2)
+#' )
+#' res = randomsearch(obj.fun, max.evals = 10)
+#' summary(res)
+randomsearch = function(fun, ...) {
+  UseMethod("randomsearch")
+}
+
+#' @describeIn randomsearch optimize smoof function
+#' @inheritParams randomsearch
 #' @param design [\code{data.frame}]\cr
 #'   Initial design as data frame.
 #'   If the y-values are not already present in design, randomsearch will evaluate the points.
@@ -45,55 +54,6 @@
 #'   How many parallel jobs do you want to run to evaluate the random search?
 #'   Default is \code{NULL} which means 1 if no \code{parallelStart*} function is called.
 #'   Otherwise it will detect the number through \code{\link[parallelMap]{parallelGetOptions}}.
-#' @param ... \cr
-#'   Additional arguments that will be passed to each call of \code{fun}.
-#' @return [\code{\link[ParamHelpers]{OptPath}}]
-#' @export
-#' @examples
-#' obj.fun = makeSingleObjectiveFunction(
-#'  fn = function(x) x[1]^2 + sin(x[2]),
-#'  par.set = makeNumericParamSet(id = "x", lower = -1, upper = 1, len = 2)
-#' )
-#' res = randomsearch(obj.fun, max.evals = 10)
-#' summary(res)
-randomsearch = function(fun, ...) {
-  UseMethod("randomsearch")
-}
-
-#' @export
-randomsearch.function = function(fun, minimize = TRUE, lower, upper, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, design.y.cols = NULL, par.dir = NULL, par.jobs = NULL, ...) {
-  assertFunction(fun)
-  assertLogical(minimize, any.missing = FALSE)
-  assertNumeric(lower, finite = TRUE, any.missing = FALSE)
-  assertNumeric(upper, finite = TRUE, any.missing = FALSE, len = length(lower))
-
-  if (any(upper<lower)) {
-    stop("'upper' has to be bigger than 'lower'!")
-  }
-
-  # make param set from lower and upper
-  id = names(formals(args(fun)))[1]
-  par.set = makeNumericParamSet(id, len = length(lower), lower = lower, upper = upper)
-
-  if (length(minimize) == 1) {
-    creator.function = makeSingleObjectiveFunction
-  } else {
-    creator.function = makeMultiObjectiveFunction
-  }
-
-  obj.fun = creator.function(
-    fn = function(x, ...) {
-      res = fun(x, ...)
-      assertNumeric(res, finite = TRUE, any.missing = FALSE, len = length(minimize))
-    },
-    par.set = par.set,
-    minimize = minimize,
-    has.simple.signature = TRUE
-  )
-
-  randomsearch(fun = obj.fun, design = design, max.evals = max.evals, max.execbudget = max.execbudget, target.fun.value = target.fun.value, design.y.cols = design.y.cols, par.dir = par.dir, par.jobs = par.jobs, ...)
-}
-
 #' @export
 randomsearch.smoof_function = function(fun, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, design.y.cols = NULL, par.dir = NULL, par.jobs = NULL, ...) {
 
@@ -242,4 +202,48 @@ randomsearch.smoof_function = function(fun, design = NULL, max.evals = 20, max.e
 
   class(opt.path) = c("RandomsearchResult", class(opt.path))
   return(opt.path)
+}
+
+#' @describeIn randomsearch optimize generic function
+#' @param lower [\code{numeric()}] \cr
+#'   Lower bounds on the variables.
+#' @param upper [\code{numeric()}] \cr
+#'   Upper bounds on the variables.
+#' @param minimize [\code{logical()}]\cr
+#'   Wheter the function should be minimized or maximized.
+#'   If this is a vector we will assume it is a multi-objective optimization.
+#'   Has to have the same length as the output of the objective function \code{fun}.
+#' @inheritParams randomsearch.smoof_function
+#' @export
+randomsearch.function = function(fun, minimize = TRUE, lower, upper, design = NULL, max.evals = 20, max.execbudget = NULL, target.fun.value = NULL, design.y.cols = NULL, par.dir = NULL, par.jobs = NULL, ...) {
+  assertFunction(fun)
+  assertLogical(minimize, any.missing = FALSE)
+  assertNumeric(lower, finite = TRUE, any.missing = FALSE)
+  assertNumeric(upper, finite = TRUE, any.missing = FALSE, len = length(lower))
+
+  if (any(upper<lower)) {
+    stop("'upper' has to be bigger than 'lower'!")
+  }
+
+  # make param set from lower and upper
+  id = names(formals(args(fun)))[1]
+  par.set = makeNumericParamSet(id, len = length(lower), lower = lower, upper = upper)
+
+  if (length(minimize) == 1) {
+    creator.function = makeSingleObjectiveFunction
+  } else {
+    creator.function = makeMultiObjectiveFunction
+  }
+
+  obj.fun = creator.function(
+    fn = function(x, ...) {
+      res = fun(x, ...)
+      assertNumeric(res, finite = TRUE, any.missing = FALSE, len = length(minimize))
+    },
+    par.set = par.set,
+    minimize = minimize,
+    has.simple.signature = TRUE
+  )
+
+  randomsearch(fun = obj.fun, design = design, max.evals = max.evals, max.execbudget = max.execbudget, target.fun.value = target.fun.value, design.y.cols = design.y.cols, par.dir = par.dir, par.jobs = par.jobs, ...)
 }
